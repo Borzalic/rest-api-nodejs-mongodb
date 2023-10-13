@@ -4,7 +4,7 @@ const { sanitizeBody } = require("express-validator");
 //helper file to prepare responses.
 const apiResponse = require("../helpers/apiResponse");
 const utility = require("../helpers/utility");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mailer = require("../helpers/mailer");
 const { constants } = require("../helpers/constants");
@@ -19,6 +19,7 @@ const { constants } = require("../helpers/constants");
  *
  * @returns {Object}
  */
+
 exports.register = [
 	// Validate fields.
 	body("firstName").isLength({ min: 1 }).trim().withMessage("First name must be specified.")
@@ -62,6 +63,17 @@ exports.register = [
 							confirmOTP: otp
 						}
 					);
+					user.save(function (err) {
+						if (err) { return apiResponse.ErrorResponse(res, err); }
+						let userData = {
+							_id: user._id,
+							firstName: user.firstName,
+							lastName: user.lastName,
+							email: user.email
+						};
+						return apiResponse.successResponseWithData(res,"Registration Success.", userData);
+					});
+					/*
 					// Html email body
 					let html = "<p>Please Confirm your Account.</p><p>OTP: "+otp+"</p>";
 					// Send confirmation email
@@ -72,27 +84,20 @@ exports.register = [
 						html
 					).then(function(){
 						// Save user.
-						user.save(function (err) {
-							if (err) { return apiResponse.ErrorResponse(res, err); }
-							let userData = {
-								_id: user._id,
-								firstName: user.firstName,
-								lastName: user.lastName,
-								email: user.email
-							};
-							return apiResponse.successResponseWithData(res,"Registration Success.", userData);
-						});
+						
 					}).catch(err => {
 						console.log(err);
 						return apiResponse.ErrorResponse(res,err);
 					}) ;
+					*/
 				});
 			}
 		} catch (err) {
 			//throw error in json response with status 500.
 			return apiResponse.ErrorResponse(res, err);
 		}
-	}];
+	}
+];
 
 /**
  * User login.
@@ -156,7 +161,8 @@ exports.login = [
 		} catch (err) {
 			return apiResponse.ErrorResponse(res, err);
 		}
-	}];
+	}
+];
 
 /**
  * Verify Confirm otp.
@@ -207,7 +213,8 @@ exports.verifyConfirm = [
 		} catch (err) {
 			return apiResponse.ErrorResponse(res, err);
 		}
-	}];
+	}
+];
 
 /**
  * Resend Confirm otp.
@@ -261,4 +268,5 @@ exports.resendConfirmOtp = [
 		} catch (err) {
 			return apiResponse.ErrorResponse(res, err);
 		}
-	}];
+	}
+];
